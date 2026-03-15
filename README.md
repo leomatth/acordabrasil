@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AcordaBrasil
 
-## Getting Started
+Plataforma cívica em Next.js 14 + TypeScript + TailwindCSS para visualização de gastos públicos, impostos, PECs, eleições e políticos.
 
-First, run the development server:
+## Executar localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Modo de dados (mock / hybrid / live)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+O projeto suporta integração gradual com fontes públicas reais sem remover os mocks.
 
-## Learn More
+Copie `.env.example` para `.env.local` e ajuste:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+NEXT_PUBLIC_DATA_MODE=mock
+NEXT_PUBLIC_TRANSPARENCY_API_URL=https://api.exemplo.gov.br
+CAMARA_API_BASE_URL=https://dadosabertos.camara.leg.br/api/v2
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Regras de execução:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- `mock`: usa somente dados simulados.
+- `hybrid`: tenta API pública e faz fallback para mock se houver falha.
+- `live`: tenta API pública, registra erro tratado e mantém a UI estável com fallback controlado.
 
-## Deploy on Vercel
+## Analytics e tracking de eventos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Arquitetura desacoplada em camadas:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- `lib/analytics/events.ts`: catálogo padronizado de eventos.
+- `lib/analytics/analytics.ts`: função central `trackEvent(eventName, payload)`.
+- `lib/analytics/providers.ts`: adapters para providers (debug/placeholder real).
+- `components/AnalyticsProvider.tsx`: page view automático no App Router + painel debug.
+- `hooks/useTrackEvent.ts`: hook reutilizável para componentes.
+
+Configuração por ambiente:
+
+```bash
+NEXT_PUBLIC_ANALYTICS_MODE=off
+```
+
+Modos disponíveis:
+
+- `off`: desativa tracking.
+- `debug`: registra eventos no console e mostra painel de sessão em desenvolvimento.
+- `enabled`: mantém trilha ativa com adapter placeholder pronto para integração futura (GA, GTM, Plausible, PostHog, Umami).
+
+Boas práticas aplicadas:
+
+- Não coletar dados pessoais sensíveis.
+- Priorizar eventos de navegação e produto.
+- UI sem acoplamento direto com ferramenta específica de analytics.
+
+## Arquitetura de dados
+
+Camadas implementadas:
+
+- `lib/services/*`: orquestram modo de dados, fetch, cache e fallback.
+- `lib/adapters/*`: convertem payload externo para modelo interno do AcordaBrasil.
+- `lib/utils/fetchWithFallback.ts`: utilitário central para API + fallback de mock.
+- `types/*`: tipagem interna padronizada por domínio.
+
+Princípios:
+
+- Componentes React não consomem API externa diretamente.
+- UI usa modelos internos padronizados.
+- Falhas externas não derrubam as páginas.
+
+## Estratégia de migração gradual
+
+Ordem planejada no código:
+
+1. Gastos públicos
+2. Impostos / arrecadação
+3. PECs e projetos de lei
+4. Eleições e pesquisas
+5. Políticos
+
+## Build e qualidade
+
+```bash
+npm run lint
+npm run build
+```

@@ -1,113 +1,195 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import { AdPlaceholder } from "@/components/AdPlaceholder";
+import { BrazilMap } from "@/components/BrazilMap";
+import { Counter } from "@/components/Counter";
+import { DataDebugPanel } from "@/components/DataDebugPanel";
+import { DataOriginBadge } from "@/components/DataOriginBadge";
+import { LiveSpendCard } from "@/components/LiveSpendCard";
+import { PecCard } from "@/components/PecCard";
+import { SectionTitle } from "@/components/SectionTitle";
+import { StatCard } from "@/components/StatCard";
+import { TaxChart } from "@/components/TaxChart";
+import { TrackedLink } from "@/components/TrackedLink";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { HERO_CONTENT, LIVE_SPEND_CONFIG } from "@/lib/constants";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { pecsMock } from "@/lib/mockData";
+import {
+  getAllStatesSpending,
+  getPublicSpendingOverview,
+} from "@/lib/services/publicSpendingService";
+import { getTaxRealtimeMetrics } from "@/lib/services/taxesService";
+import { createPageMetadata } from "@/lib/seo";
+import { CalendarClock, Landmark, Users } from "lucide-react";
 
-export default function Home() {
+export const metadata: Metadata = createPageMetadata({
+  title: "Gastos públicos do Brasil em dados simples | AcordaBrasil",
+  description:
+    "Veja gastos públicos, impostos, PECs e dados políticos explicados de forma simples.",
+  path: "/",
+});
+
+export default async function Home() {
+  const [spendingOverviewResult, stateSpendingResult, taxRealtimeResult] = await Promise.all([
+    getPublicSpendingOverview(),
+    getAllStatesSpending(),
+    getTaxRealtimeMetrics(),
+  ]);
+
+  const spendingOverview = spendingOverviewResult.data;
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main className="container-page space-y-14 py-10">
+      <section className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-extrabold text-[#0f3d2e] sm:text-4xl xl:text-5xl">
+            {HERO_CONTENT.title}
+          </h1>
+          <p className="max-w-2xl text-base text-slate-600 sm:text-lg">
+            {HERO_CONTENT.subtitle}
+          </p>
         </div>
-      </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+        <div className="grid items-start gap-6 xl:grid-cols-[1.45fr_1fr]">
+          <div className="order-2 xl:order-1">
+            <BrazilMap
+              statesData={stateSpendingResult.data}
+              dataOrigin={{
+                source: stateSpendingResult.source,
+                mode: stateSpendingResult.mode,
+                lastUpdated: stateSpendingResult.lastUpdated,
+                errorMessage: stateSpendingResult.errorMessage,
+              }}
+            />
+          </div>
+
+          <div className="order-1 space-y-4 xl:order-2">
+            <DataOriginBadge
+              source={spendingOverviewResult.source}
+              mode={spendingOverviewResult.mode}
+              lastUpdated={spendingOverviewResult.lastUpdated}
+              errorMessage={spendingOverviewResult.errorMessage}
+            />
+
+            <Counter
+              label={HERO_CONTENT.counterLabel}
+              value={spendingOverview.totalPublicSpending}
+              variant="hero"
+            />
+
+            <LiveSpendCard
+              title={HERO_CONTENT.viralTitle}
+              caption={HERO_CONTENT.viralCaption}
+              config={{
+                ...LIVE_SPEND_CONFIG,
+                amountPerSecond: taxRealtimeResult.data.ratePerSecond,
+              }}
+            />
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatCard
+                title="Gasto hoje"
+                value={formatCurrency(spendingOverview.spendingToday)}
+                icon={CalendarClock}
+              />
+              <StatCard
+                title="Gasto no mês"
+                value={formatCurrency(spendingOverview.spendingMonth)}
+                icon={Landmark}
+              />
+              <StatCard
+                title="Gasto por cidadão"
+                value={`${formatCurrency(spendingOverview.spendingPerCitizen)} / ano`}
+                icon={Users}
+              />
+            </div>
+
+            <DataDebugPanel
+              mode={spendingOverviewResult.mode}
+              source={spendingOverviewResult.source}
+              lastUpdated={spendingOverviewResult.lastUpdated}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <SectionTitle
+          title="PECs e Projetos de Lei em destaque"
+          subtitle="Projetos legislativos recentes com impacto orçamentário e atualização contínua."
         />
-      </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {pecsMock.slice(0, 6).map((pec) => (
+            <PecCard key={pec.id} pec={pec} variant="highlight" buttonLabel="Ver detalhes" />
+          ))}
+        </div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+        <div>
+          <TrackedLink
+            href="/pecs"
+            eventName={ANALYTICS_EVENTS.CTA_CLICK}
+            eventPayload={{ section: "home_pecs", source: "home", label: "Ver todos os projetos" }}
+            className="inline-flex items-center rounded-md border border-[#0f3d2e] px-4 py-2 text-sm font-semibold text-[#0f3d2e] transition hover:bg-[#0f3d2e] hover:text-white"
+          >
+            Ver todos os projetos
+          </TrackedLink>
+        </div>
+      </section>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+      {/* Área reservada para monetização futura (banner entre seções da homepage) */}
+      <AdPlaceholder label="Espaço para anúncio futuro" className="hidden md:block" />
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <section className="space-y-6">
+        <SectionTitle
+          title="Arrecadação de Impostos"
+          subtitle="Resumo do dia e distribuição por tipo de imposto."
+        />
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+          <Counter
+            label="Impostos arrecadados hoje"
+            value={taxRealtimeResult.data.taxesCollectedToday}
+          />
+          <TaxChart />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-6 shadow-sm">
+        <h2 className="text-2xl font-bold text-[#0f3d2e]">Apoie o AcordaBrasil</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Ajude a manter este projeto independente e acessível para todos.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <TrackedLink
+            href="/apoiar"
+            eventName={ANALYTICS_EVENTS.SUPPORT_CLICK}
+            eventPayload={{ section: "home_support", source: "home", label: "Apoiar o projeto" }}
+            className="rounded-md bg-[#0f3d2e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#14553f]"
+          >
+            Apoiar o projeto
+          </TrackedLink>
+          <TrackedLink
+            href="/newsletter"
+            eventName={ANALYTICS_EVENTS.CTA_CLICK}
+            eventPayload={{ section: "home_support", source: "home", label: "Receber newsletter" }}
+            className="rounded-md border border-[#0f3d2e] px-4 py-2 text-sm font-semibold text-[#0f3d2e] transition hover:bg-[#0f3d2e] hover:text-white"
+          >
+            Receber newsletter
+          </TrackedLink>
+        </div>
+      </section>
+
+      {/* Área reservada para monetização futura (final de listagens/conteúdo) */}
+      <AdPlaceholder label="Espaço final para patrocinadores futuros" />
+
+      <section id="sobre" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <SectionTitle
+          title="Sobre o AcordaBrasil"
+          subtitle="MVP preparado para futura escala com contador em tempo real, simulação de impostos e novos painéis eleitorais."
+        />
+      </section>
     </main>
   );
 }
