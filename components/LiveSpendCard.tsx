@@ -1,39 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useLiveSpendCounter } from "@/hooks/useLiveSpendCounter";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { getAccumulatedValue, getElapsedSeconds, type LiveSpendConfig } from "@/lib/liveSpend";
+import type { LiveSpendConfig } from "@/lib/liveSpend";
+import { getNumberScaleClass } from "@/lib/utils/numberDisplay";
 
 type LiveSpendCardProps = {
   title: string;
   caption: string;
   config: LiveSpendConfig;
+  variant?: "default" | "taxes";
 };
 
-export function LiveSpendCard({ title, caption, config }: LiveSpendCardProps) {
-  const [value, setValue] = useState(config.initialValue ?? 0);
-
-  useEffect(() => {
-    const startedAt = Date.now();
-
-    const timer = window.setInterval(() => {
-      const elapsedSeconds = getElapsedSeconds(startedAt);
-      setValue(getAccumulatedValue(config, elapsedSeconds, config.initialValue ?? 0));
-    }, config.intervalMs);
-
-    const initialElapsedSeconds = getElapsedSeconds(startedAt);
-    setValue(getAccumulatedValue(config, initialElapsedSeconds, config.initialValue ?? 0));
-
-    return () => window.clearInterval(timer);
-  }, [config]);
+export function LiveSpendCard({ title, caption, config, variant = "default" }: LiveSpendCardProps) {
+  const minFrameMs = Math.min(150, Math.max(50, config.intervalMs / 6));
+  const value = useLiveSpendCounter({
+    amountPerSecond: config.amountPerSecond,
+    minFrameMs,
+    startDelayMs: 1000,
+  });
 
   const formattedValue = useMemo(() => formatCurrency(value), [value]);
+  const valueScaleClass = getNumberScaleClass(formattedValue, "primary");
+  const isTaxesVariant = variant === "taxes";
 
   return (
-    <article className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 shadow-sm">
-      <p className="text-sm font-semibold text-slate-700">{title}</p>
-      <p className="mt-2 text-2xl font-extrabold text-[#0f3d2e] sm:text-3xl">{formattedValue}</p>
-      <p className="mt-2 text-xs text-slate-500">{caption}</p>
+    <article
+      className={`min-w-0 overflow-hidden rounded-2xl border p-5 shadow-sm ${
+        isTaxesVariant
+          ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-white"
+          : "border-amber-200 bg-gradient-to-r from-amber-50 to-white"
+      }`}
+    >
+      <p className={`text-sm font-semibold ${isTaxesVariant ? "text-emerald-900" : "text-slate-700"}`}>
+        {title}
+      </p>
+      <p
+        className={`mt-2 max-w-full break-all font-extrabold leading-[1.08] tracking-tight text-[#0f3d2e] ${valueScaleClass}`}
+      >
+        {formattedValue}
+      </p>
+      <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+        Acumulado desde que você abriu esta página
+      </p>
+      <p className={`mt-2 text-xs leading-relaxed ${isTaxesVariant ? "text-slate-600" : "text-slate-500"}`}>
+        {caption}
+      </p>
     </article>
   );
 }

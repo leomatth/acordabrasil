@@ -14,7 +14,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/pecs",
     "/eleicoes",
     "/politicos",
-    "/politicos/ranking",
     "/escandalos",
     "/apoiar",
     "/newsletter",

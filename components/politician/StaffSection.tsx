@@ -77,9 +77,10 @@ export function StaffSection({
         </>
       ) : (
         <article className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-700">Fonte em integração</p>
+          <p className="text-sm font-semibold text-slate-700">Cobertura parcial da equipe</p>
           <p className="mt-1 text-sm text-slate-600">
-            {integrationMessage || "Dados de assessores ainda não disponíveis de forma segura na fonte atual."}
+            {integrationMessage
+              || "Dados de assessores do gabinete ainda não disponíveis de forma segura na fonte oficial atual."}
           </p>
         </article>
       )}

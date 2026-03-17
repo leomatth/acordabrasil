@@ -9,6 +9,13 @@ type ProfileHeaderProps = {
 };
 
 export function ProfileHeader({ politician, profileResult }: ProfileHeaderProps) {
+  const coverageLabel =
+    politician.coverageStatus === "real"
+      ? "Cobertura ampliada"
+      : politician.coverageStatus === "partial"
+        ? "Cobertura parcial"
+        : "Cobertura em integração";
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -35,7 +42,7 @@ export function ProfileHeader({ politician, profileResult }: ProfileHeaderProps)
             {politician.situacao?.trim() || "Situação não informada"}
           </span>
           <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-            Perfil completo
+            {coverageLabel}
           </span>
         </div>
       </div>

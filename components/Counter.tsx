@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { getNumberScaleClass } from "@/lib/utils/numberDisplay";
 
 type CounterProps = {
   label: string;
@@ -22,6 +23,8 @@ export function Counter({
     () => formatCurrency(Math.round(displayValue)),
     [displayValue],
   );
+  const isHero = variant === "hero";
+  const valueScaleClass = getNumberScaleClass(formattedValue, isHero ? "hero" : "primary");
 
   // Animação suave sempre que o valor-alvo muda.
   useEffect(() => {
@@ -48,11 +51,9 @@ export function Counter({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, variant]);
 
-  const isHero = variant === "hero";
-
   return (
     <article
-      className={`rounded-2xl border p-6 shadow-sm ${
+      className={`min-w-0 overflow-hidden rounded-2xl border p-6 shadow-sm ${
         isHero
           ? "border-[#0f3d2e] bg-gradient-to-br from-[#0f3d2e] to-[#14553f] text-white shadow-lg"
           : "border-slate-200 bg-white"
@@ -66,10 +67,8 @@ export function Counter({
         {label}
       </p>
       <p
-        className={`mt-3 font-extrabold ${
-          isHero
-            ? "text-3xl leading-tight text-white sm:text-4xl xl:text-5xl"
-            : "text-2xl text-[#0f3d2e] sm:text-4xl"
+        className={`mt-3 max-w-full break-all font-extrabold leading-[1.08] tracking-tight ${valueScaleClass} ${
+          isHero ? "text-white" : "text-[#0f3d2e]"
         }`}
       >
         {formattedValue}

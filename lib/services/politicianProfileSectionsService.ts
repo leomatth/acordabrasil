@@ -121,6 +121,8 @@ export async function buildPoliticianProfileSectionsData(
 
   const relatedLegislationItems = isSenator
     ? (legislationItemsResult?.data ?? [])
+    : isFederalDeputy
+      ? (legislationItemsResult?.data ?? [])
     : isPresident
       ? (legislationItemsResult?.data ?? [])
       : isGovernor
@@ -145,7 +147,7 @@ export async function buildPoliticianProfileSectionsData(
               resolvedPolitician.dataSourceInfo.sourceUrl,
             ),
             integrationMessage: isFederalDeputy
-              ? "Dados oficiais de presença ainda em integração para este perfil."
+              ? "Dados oficiais de presença não disponíveis com segurança para este perfil/período."
               : isSenator
                 ? "Não foi possível consolidar presença oficial para este perfil no período selecionado."
                 : isPresident
@@ -176,7 +178,7 @@ export async function buildPoliticianProfileSectionsData(
             resolvedPolitician.dataSourceInfo.sourceUrl,
           ),
           errorMessage: isFederalDeputy
-            ? "Histórico de votações ainda em integração para este perfil."
+            ? "Histórico nominal de votações não disponível com segurança para este perfil/período."
             : isSenator
               ? "Histórico nominal ainda em integração para este perfil no período selecionado."
               : isPresident
@@ -203,7 +205,7 @@ export async function buildPoliticianProfileSectionsData(
             resolvedPolitician.dataSourceInfo.sourceUrl,
           ),
           errorMessage: isFederalDeputy
-            ? "Dados de assessores ainda não disponíveis de forma segura na fonte atual."
+            ? "Dados de assessores do gabinete ainda não disponíveis de forma segura na fonte oficial atual."
             : isSenator
               ? "Dados de assessores ainda em integração para este perfil no Senado Federal."
               : isPresident

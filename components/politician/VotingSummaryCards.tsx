@@ -3,6 +3,8 @@ type VotingSummaryCardsProps = {
   favor: number;
   contra: number;
   abstencao: number;
+  obstrucao: number;
+  outros: number;
   hasData: boolean;
 };
 
@@ -15,6 +17,8 @@ export function VotingSummaryCards({
   favor,
   contra,
   abstencao,
+  obstrucao,
+  outros,
   hasData,
 }: VotingSummaryCardsProps) {
   const cards = [
@@ -22,10 +26,12 @@ export function VotingSummaryCards({
     { label: "A favor", value: formatValue(favor, hasData) },
     { label: "Contra", value: formatValue(contra, hasData) },
     { label: "Abstenções", value: formatValue(abstencao, hasData) },
+    { label: "Obstruções", value: formatValue(obstrucao, hasData) },
+    { label: "Outros votos", value: formatValue(outros, hasData) },
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
         <article key={card.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{card.label}</p>

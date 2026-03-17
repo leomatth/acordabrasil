@@ -273,6 +273,10 @@ async function fetchExternalTaxRealtimeMetrics(): Promise<TaxRealtimeMetrics> {
   };
 }
 
+export async function getTaxRealtimeMetricsApiOnly(): Promise<TaxRealtimeMetrics> {
+  return fetchExternalTaxRealtimeMetrics();
+}
+
 export async function getTaxSummary(): Promise<DataFetchResult<TaxSummary[]>> {
   return fetchWithFallback({
     resourceName: "resumo de impostos",

@@ -1,4 +1,5 @@
 import { DataOriginBadge } from "@/components/DataOriginBadge";
+import { DataSourceBlock } from "@/components/data-source/DataSourceBlock";
 import type { DataFetchResult } from "@/types/dataSource";
 import type { PoliticianProfile } from "@/types/politician";
 
@@ -54,6 +55,14 @@ export function ProfileInfoSection({ politician, profileResult }: ProfileInfoSec
         lastUpdated={profileResult.lastUpdated}
         errorMessage={profileResult.errorMessage}
         className="max-w-md"
+      />
+
+      <DataSourceBlock
+        title="Fonte da identificação"
+        dataSourceInfo={politician.dataSourceInfo}
+        coverageStatus={politician.sectionCoverage?.identificacao.status}
+        coverageReason={politician.sectionCoverage?.identificacao.reason}
+        className="max-w-3xl"
       />
     </section>
   );

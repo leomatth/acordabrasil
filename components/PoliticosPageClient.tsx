@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { DataSourceBlock } from "@/components/data-source/DataSourceBlock";
 import { EmptyState } from "@/components/states/EmptyState";
 import { FilterBar } from "@/components/FilterBar";
@@ -82,7 +81,6 @@ export function PoliticosPageClient({ politiciansResult, officeCoverage }: Polit
     return officeCoverage.find((item) => item.cargo === cargoFilter) ?? null;
   }, [cargoFilter, officeCoverage]);
 
-  // Sempre que busca/filtros mudarem, a lista volta para a primeira página.
   useEffect(() => {
     setCurrentPage(1);
   }, [search, cargoFilter, partidoFilter, estadoFilter]);
@@ -136,15 +134,6 @@ export function PoliticosPageClient({ politiciansResult, officeCoverage }: Polit
         title="Busque um político"
         subtitle="Encontre informações sobre cargos, partidos, votações e atuação pública."
       />
-
-      <div>
-        <Link
-          href="/politicos/ranking"
-          className="inline-flex rounded-md border border-[#0f3d2e] px-3 py-2 text-sm font-semibold text-[#0f3d2e] transition hover:bg-[#0f3d2e] hover:text-white"
-        >
-          Ver ranking de políticos
-        </Link>
-      </div>
 
       <DataSourceBlock
         dataSourceInfo={{

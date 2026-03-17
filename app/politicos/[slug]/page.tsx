@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CoverageBadge } from "@/components/coverage/CoverageBadge";
 import { DataSourceBlock } from "@/components/data-source/DataSourceBlock";
@@ -16,6 +15,7 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { getPoliticalSalaryByOffice } from "@/lib/constants/politicalSalaries";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { getPoliticianBySlug } from "@/lib/services/politiciansService";
+import { summarizeFederalDeputyVoting } from "@/lib/services/federalDeputyVotesService";
 import {
   buildPoliticianProfileSectionsData,
   defaultSourceInfo,
@@ -143,13 +143,20 @@ export default async function PoliticianProfilePage({
   const salaryReference = getPoliticalSalaryByOffice(resolvedPolitician.cargo);
   const salaryValue = salaryReference?.salarioBase ?? null;
 
-  const approvedRelatedCount = hasReliableLegislationIntegration
-    ? relatedLegislationItems.filter((item) => item.status === "Aprovada").length
-    : null;
+  const votingSummary = summarizeFederalDeputyVoting(votingHistoryResult.data);
+  const hasReliableVotingSummary = votingHistoryResult.data.length > 0;
 
-  const rejectedRelatedCount = hasReliableLegislationIntegration
-    ? relatedLegislationItems.filter((item) => item.status === "Rejeitada").length
-    : null;
+  const approvedRelatedCount = resolvedPolitician.cargo === "Deputado Federal"
+    ? (hasReliableVotingSummary ? votingSummary.approvedWithParticipation : null)
+    : hasReliableLegislationIntegration
+      ? relatedLegislationItems.filter((item) => item.status === "Aprovada").length
+      : null;
+
+  const rejectedRelatedCount = resolvedPolitician.cargo === "Deputado Federal"
+    ? (hasReliableVotingSummary ? votingSummary.rejectedWithParticipation : null)
+    : hasReliableLegislationIntegration
+      ? relatedLegislationItems.filter((item) => item.status === "Rejeitada").length
+      : null;
 
   const legislationSourceInfoSafe = legislationSourceInfo || defaultSourceInfo(
     new Date().toISOString(),
@@ -202,10 +209,27 @@ export default async function PoliticianProfilePage({
         referencePeriod: presenceResult.data.dataSourceInfo.referencePeriod,
         reason: presenceResult.data.integrationMessage,
       },
+      votacoes: {
+        key: "votacoes",
+        status: resolveSectionStatus({
+          hasPrimaryData: votingHistoryResult.data.length > 0,
+          hasFallbackData: Boolean(votingHistoryResult.errorMessage),
+          unavailable:
+            votingHistoryResult.errorMessage?.includes("Não disponível para este cargo/fonte") || false,
+        }),
+        sourceName:
+          votingHistoryResult.dataSourceInfo?.sourceName || resolvedPolitician.dataSourceInfo.sourceName,
+        sourceUrl:
+          votingHistoryResult.dataSourceInfo?.sourceUrl || resolvedPolitician.dataSourceInfo.sourceUrl,
+        referencePeriod:
+          votingHistoryResult.dataSourceInfo?.referencePeriod
+          || (filters.ano ? String(filters.ano) : resolvedPolitician.dataSourceInfo.referencePeriod),
+        reason: votingHistoryResult.errorMessage,
+      },
       proposicoes: {
         key: "proposicoes",
         status: resolveSectionStatus({
-          hasPrimaryData: hasReliableLegislationIntegration,
+          hasPrimaryData: hasReliableLegislationIntegration && relatedLegislationItems.length > 0,
           hasFallbackData: Boolean(legislationIntegrationMessage),
           unavailable: Boolean(legislationIntegrationMessage?.includes("Não disponível para este cargo/fonte")),
         }),
@@ -239,15 +263,6 @@ export default async function PoliticianProfilePage({
         eventName={ANALYTICS_EVENTS.POLITICIAN_PROFILE_VIEW}
         payload={{ section: "politician_profile", source: "profile_page", label: resolvedPolitician.slug }}
       />
-
-      <div className="flex justify-end">
-        <Link
-          href="/politicos/ranking"
-          className="inline-flex rounded-md border border-[#0f3d2e] px-3 py-2 text-sm font-semibold text-[#0f3d2e] transition hover:bg-[#0f3d2e] hover:text-white"
-        >
-          Ver ranking de políticos
-        </Link>
-      </div>
 
       <ProfileHeader politician={resolvedPolitician} profileResult={profileResult} />
 
@@ -302,9 +317,10 @@ export default async function PoliticianProfilePage({
           dataSourceInfo={{
             sourceName: sectionCoverage.remuneracao.sourceName,
             sourceType: "official_portal",
-            sourceUrl: sectionCoverage.remuneracao.sourceUrl,
-            referencePeriod: sectionCoverage.remuneracao.referencePeriod,
-            lastUpdated: resolvedPolitician.lastUpdated,
+            sourceUrl: salaryReference?.sourceUrl || sectionCoverage.remuneracao.sourceUrl,
+            referencePeriod:
+              salaryReference?.referencePeriod || sectionCoverage.remuneracao.referencePeriod,
+            lastUpdated: salaryReference?.lastUpdated || resolvedPolitician.lastUpdated,
           }}
           coverageStatus={sectionCoverage.remuneracao.status}
           coverageReason={sectionCoverage.remuneracao.reason}
@@ -321,7 +337,7 @@ export default async function PoliticianProfilePage({
           sourceType: "official_portal",
           sourceUrl: sectionCoverage.gastos.sourceUrl,
           referencePeriod: sectionCoverage.gastos.referencePeriod,
-          lastUpdated: resolvedPolitician.lastUpdated,
+          lastUpdated: expensesSummaryResult?.lastUpdated || resolvedPolitician.lastUpdated,
         }}
         coverageStatus={sectionCoverage.gastos.status}
         coverageReason={sectionCoverage.gastos.reason}
@@ -333,6 +349,8 @@ export default async function PoliticianProfilePage({
       <PresenceCard
         presencePercent={presenceResult.data.percentualPresenca}
         sessionsCount={presenceResult.data.sessoesConsideradas}
+        validPresenceCount={presenceResult.data.presencasValidas}
+        methodologySummary={presenceResult.data.metodologiaResumo}
         integrationMessage={presenceResult.data.integrationMessage}
         sourceInfo={presenceResult.data.dataSourceInfo}
         coverageStatus={sectionCoverage.presencaAtividade.status}
@@ -346,8 +364,8 @@ export default async function PoliticianProfilePage({
           || defaultSourceInfo(votingHistoryResult.lastUpdated, filters.ano ? String(filters.ano) : undefined)
         }
         integrationMessage={votingHistoryResult.errorMessage}
-        coverageStatus={sectionCoverage.presencaAtividade.status}
-        coverageReason={votingHistoryResult.errorMessage || sectionCoverage.presencaAtividade.reason}
+        coverageStatus={sectionCoverage.votacoes.status}
+        coverageReason={sectionCoverage.votacoes.reason}
       />
 
       <StaffSection
@@ -372,16 +390,29 @@ export default async function PoliticianProfilePage({
           <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Proposições aprovadas com participação</p>
             <p className="mt-2 text-xl font-bold text-[#0f3d2e]">
-              {approvedRelatedCount === null ? "Em integração" : approvedRelatedCount}
+              {approvedRelatedCount === null ? "Indisponível" : approvedRelatedCount}
             </p>
           </article>
           <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Proposições rejeitadas com participação</p>
             <p className="mt-2 text-xl font-bold text-[#0f3d2e]">
-              {rejectedRelatedCount === null ? "Em integração" : rejectedRelatedCount}
+              {rejectedRelatedCount === null ? "Indisponível" : rejectedRelatedCount}
             </p>
           </article>
         </div>
+        {resolvedPolitician.cargo === "Deputado Federal" ? (
+          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Metodologia: contagem baseada em votações nominais oficiais com vínculo de proposição e
+            resultado identificável na Câmara. Votações sem vínculo/resultado explícito ficam fora da
+            contagem para evitar inferência indevida.
+          </p>
+        ) : null}
+        {resolvedPolitician.cargo === "Deputado Federal" && votingSummary.unresolvedPropositionLinks > 0 ? (
+          <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Cobertura parcial: {votingSummary.unresolvedPropositionLinks} votação(ões) sem vínculo oficial
+            suficiente de proposição/resultado no recorte atual.
+          </p>
+        ) : null}
         {legislationIntegrationMessage ? (
           <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {legislationIntegrationMessage}
@@ -393,6 +424,16 @@ export default async function PoliticianProfilePage({
             Ainda não há provider estadual oficial registrado para {resolvedPolitician.estado} neste cargo.
           </p>
         ) : null}
+
+        <DataSourceBlock
+          title="Fonte das aprovações e rejeições"
+          dataSourceInfo={
+            votingHistoryResult.dataSourceInfo
+            || defaultSourceInfo(votingHistoryResult.lastUpdated, filters.ano ? String(filters.ano) : undefined)
+          }
+          coverageStatus={sectionCoverage.votacoes.status}
+          coverageReason={sectionCoverage.votacoes.reason}
+        />
       </section>
     </main>
   );

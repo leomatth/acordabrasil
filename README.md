@@ -72,6 +72,27 @@ Princípios:
 - UI usa modelos internos padronizados.
 - Falhas externas não derrubam as páginas.
 
+## API usada na página inicial
+
+A primeira página (`/`) agora está em modo **API-only** para os cards de gastos e impostos em tempo real.
+Não há fallback para dados mockados nessa seção.
+
+Base URL configurável:
+
+```bash
+NEXT_PUBLIC_TRANSPARENCY_API_URL=https://sua-api
+```
+
+Endpoints esperados:
+
+- `GET /spending/total` → total acumulado de gastos públicos.
+- `GET /spending/overview` → resumo com `spendingToday`, `spendingMonth`, `spendingPerCitizen`.
+- `GET /spending/states` → mapa de estados com gastos anuais/mensais/per capita.
+- `GET /taxes/realtime` → `taxesCollectedToday` e/ou `ratePerSecond`.
+	- Fallback interno (ainda API): `GET /taxes/summary` com item diário de arrecadação.
+
+Se algum endpoint falhar, a home exibe estado de indisponibilidade (sem injetar mock).
+
 ## Estratégia de migração gradual
 
 Ordem planejada no código:

@@ -14,7 +14,6 @@ export const NAV_LINKS = [
   { label: "Impostos", href: "/impostos" },
   { label: "Eleições", href: "/eleicoes" },
   { label: "Políticos", href: "/politicos" },
-  { label: "Ranking", href: "/politicos/ranking" },
   { label: "Escândalos", href: "/escandalos" },
   { label: "Sobre", href: "/sobre" },
 ] as const;
@@ -24,8 +23,8 @@ export const HERO_CONTENT = {
   subtitle:
     "Acompanhe dados públicos do Brasil de forma simples, visual e acessível.",
   counterLabel: "Gasto Público Total",
-  viralTitle: "Impostos arrecadados enquanto você está aqui:",
-  viralCaption: "Contador em tempo real com base na taxa diária de arrecadação.",
+  viralTitle: "Enquanto você está aqui, o governo já gastou:",
+  viralCaption: "Simulação visual em reais, derivada de referência pública oficial.",
 } as const;
 
 export const LIVE_SPEND_CONFIG = {

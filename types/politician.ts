@@ -14,6 +14,7 @@ export type ProfileSectionKey =
   | "remuneracao"
   | "gastos"
   | "presencaAtividade"
+  | "votacoes"
   | "proposicoes"
   | "equipeGabinete";
 
@@ -48,6 +49,7 @@ export type VotingRecord = {
   titulo: string;
   data: string;
   voto?: string;
+  resultado?: "Aprovada" | "Rejeitada" | "Indisponível";
   proposicaoId?: string;
   sourceName: string;
   sourceUrl?: string;
@@ -56,6 +58,8 @@ export type VotingRecord = {
 export type PresenceInsight = {
   percentualPresenca: number | null;
   sessoesConsideradas: number | null;
+  presencasValidas?: number | null;
+  metodologiaResumo?: string;
   dataSourceInfo: DataSourceInfo;
   integrationMessage?: string;
 };

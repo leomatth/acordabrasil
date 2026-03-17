@@ -2,6 +2,13 @@ import type { DataSource } from "@/types/dataSource";
 
 export type LegislationStatus = "Aprovada" | "Rejeitada" | "Em tramitação";
 
+export type RelatedLegislationRelationType =
+  | "autor"
+  | "coautor"
+  | "relator"
+  | "participante_votacao"
+  | "outro_vinculo_oficial";
+
 export type LegislationSubject =
   | "Economia"
   | "Impostos"
@@ -73,6 +80,9 @@ export type LegislationItem = {
   timeline: LegislationTimelineEvent[];
   votos: LegislationVotes;
   votacoes?: LegislationVotingSession[];
+  relationTypes?: RelatedLegislationRelationType[];
+  relationLabel?: string;
+  relationSource?: string;
   source?: DataSource;
   lastUpdated?: string;
 };

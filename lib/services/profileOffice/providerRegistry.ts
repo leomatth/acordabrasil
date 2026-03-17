@@ -1,13 +1,4 @@
-import {
-  getDeputadoExpenses,
-  getDeputadoExpensesSummary,
-} from "@/lib/services/camaraExpensesService";
-import { getLegislationItems } from "@/lib/services/legislationService";
-import {
-  getDeputadoPresenceInsight,
-  getDeputadoStaff,
-  getDeputadoVotingHistory,
-} from "@/lib/services/politicianProfileInsightsService";
+import { loadFederalDeputyProfileSections } from "@/lib/services/federalDeputyProfileService";
 import {
   getGovernorSPActivityRecords,
   getGovernorSPLegislationItems,
@@ -52,47 +43,7 @@ async function loadFederalDeputySections(
   politician: PoliticianProfile,
   filters: PoliticianProfileFilters,
 ): Promise<OfficeSectionsResult> {
-  let expensesSummaryResult: DataFetchResult<ExpenseSummary> | null = null;
-  let expensesResult: DataFetchResult<ExpenseItem[]> | null = null;
-  let expensesErrorMessage: string | null = null;
-
-  try {
-    [expensesSummaryResult, expensesResult] = await Promise.all([
-      getDeputadoExpensesSummary(politician.id, filters),
-      getDeputadoExpenses(politician.id, filters),
-    ]);
-  } catch (error) {
-    expensesErrorMessage =
-      error instanceof Error
-        ? error.message
-        : "Não foi possível carregar as despesas parlamentares no momento.";
-  }
-
-  let legislationItemsResult: DataFetchResult<LegislationItem[]> | null = null;
-  let legislationIntegrationMessage: string | null = null;
-
-  try {
-    legislationItemsResult = await getLegislationItems();
-  } catch {
-    legislationIntegrationMessage = "Relações completas com proposições ainda estão em integração para este perfil.";
-  }
-
-  const [presenceSettled, votingSettled, staffSettled] = await Promise.allSettled([
-    getDeputadoPresenceInsight(politician.id, { itensVotacoes: 20, ano: filters.ano }),
-    getDeputadoVotingHistory(politician.id, { limit: 20, itensVotacoes: 25, ano: filters.ano }),
-    getDeputadoStaff(politician.id),
-  ]);
-
-  return {
-    expensesSummaryResult,
-    expensesResult,
-    expensesErrorMessage,
-    legislationItemsResult,
-    legislationIntegrationMessage,
-    presenceResult: presenceSettled.status === "fulfilled" ? presenceSettled.value : null,
-    votingHistoryResult: votingSettled.status === "fulfilled" ? votingSettled.value : null,
-    staffResult: staffSettled.status === "fulfilled" ? staffSettled.value : null,
-  };
+  return loadFederalDeputyProfileSections(politician, filters);
 }
 
 async function loadSenatorSections(

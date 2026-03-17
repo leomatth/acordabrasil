@@ -129,6 +129,26 @@ export async function fetchProposicoesFromCamara(filters: ProposicaoFilters = {}
   return payload.dados;
 }
 
+export async function fetchDeputadoProposicoesFromCamara(
+  deputadoId: number,
+  params: {
+    ano?: number;
+    pagina?: number;
+    itens?: number;
+  } = {},
+) {
+  const payload = await fetchCamara<Array<Record<string, unknown>>>("/proposicoes", {
+    idDeputadoAutor: deputadoId,
+    ano: params.ano,
+    pagina: params.pagina,
+    itens: params.itens ?? 50,
+    ordenarPor: "id",
+    ordem: "DESC",
+  });
+
+  return payload.dados;
+}
+
 export async function fetchProposicaoByIdFromCamara(id: number) {
   const payload = await fetchCamara<Record<string, unknown>>(`/proposicoes/${id}`);
   return payload;

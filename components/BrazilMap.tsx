@@ -11,7 +11,6 @@ import { DataOriginBadge } from "@/components/DataOriginBadge";
 import { formatCurrency } from "@/lib/formatCurrency";
 import {
   DEFAULT_STATE_CODE,
-  brazilStatesData,
   getStateCodeFromMapName,
 } from "@/lib/mockData";
 import {
@@ -144,7 +143,7 @@ function DetailsPanel({ stateData }: { stateData: StateSpending }) {
 }
 
 export function BrazilMap({
-  statesData = brazilStatesData,
+  statesData = {} as Record<StateCode, StateSpending>,
   dataOrigin,
 }: BrazilMapProps) {
   const track = useTrackEvent();
@@ -156,6 +155,12 @@ export function BrazilMap({
   const [activeRange, setActiveRange] = useState<SpendingRange>("all");
 
   const selectedStateData = useMemo(() => {
+    const allStates = Object.values(statesData);
+
+    if (!allStates.length) {
+      return null;
+    }
+
     const selected = statesData[selectedStateCode];
 
     if (selected) {
@@ -168,11 +173,18 @@ export function BrazilMap({
       return fallbackState;
     }
 
-    return Object.values(statesData)[0] ?? brazilStatesData[DEFAULT_STATE_CODE];
+    return allStates[0] ?? null;
   }, [selectedStateCode, statesData]);
 
   const spendingBounds = useMemo(() => {
     const values = Object.values(statesData).map((state) => state.gastoAnual);
+
+    if (!values.length) {
+      return {
+        min: 0,
+        max: 0,
+      };
+    }
 
     return {
       min: Math.min(...values),
@@ -181,6 +193,10 @@ export function BrazilMap({
   }, [statesData]);
 
   useEffect(() => {
+    if (!selectedStateData) {
+      return;
+    }
+
     if (activeRange === "all") {
       return;
     }
@@ -196,7 +212,7 @@ export function BrazilMap({
         getFirstStateByRange(activeRange, spendingBounds, statesData, DEFAULT_STATE_CODE),
       );
     }
-  }, [activeRange, selectedStateData.gastoAnual, spendingBounds, statesData]);
+  }, [activeRange, selectedStateData, spendingBounds, statesData]);
 
   const updateTooltipPosition = (
     event: React.MouseEvent<SVGPathElement, MouseEvent>,

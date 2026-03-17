@@ -120,6 +120,24 @@ async function fetchExternalBrazilTotalSpending(): Promise<number> {
   return mapped;
 }
 
+export async function getAllStatesSpendingApiOnly(): Promise<Record<StateCode, StateSpending>> {
+  return fetchExternalStatesSpending();
+}
+
+export async function getPublicSpendingOverviewApiOnly(): Promise<PublicSpendingOverview> {
+  const [totalPublicSpending, overviewDetails] = await Promise.all([
+    fetchExternalBrazilTotalSpending(),
+    fetchExternalSpendingOverviewDetails(),
+  ]);
+
+  return {
+    totalPublicSpending,
+    spendingToday: overviewDetails.spendingToday,
+    spendingMonth: overviewDetails.spendingMonth,
+    spendingPerCitizen: overviewDetails.spendingPerCitizen,
+  };
+}
+
 export async function getAllStatesSpending(): Promise<
   DataFetchResult<Record<StateCode, StateSpending>>
 > {

@@ -27,7 +27,9 @@ export function VotingHistorySection({
   const normalizedVotes = records.map((record) => String(record.voto ?? "").toLowerCase());
   const favor = normalizedVotes.filter((item) => item.includes("sim") || item.includes("favor")).length;
   const contra = normalizedVotes.filter((item) => item.includes("não") || item.includes("nao") || item.includes("contra")).length;
-  const abstencao = normalizedVotes.filter((item) => item.includes("absten") || item.includes("obstru")).length;
+  const abstencao = normalizedVotes.filter((item) => item.includes("absten")).length;
+  const obstrucao = normalizedVotes.filter((item) => item.includes("obstru")).length;
+  const outros = Math.max(0, records.length - favor - contra - abstencao - obstrucao);
 
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -35,7 +37,7 @@ export function VotingHistorySection({
 
       {integrationMessage ? (
         <article className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-700">Em integração</p>
+          <p className="text-sm font-semibold text-slate-700">Cobertura parcial</p>
           <p className="mt-1 text-sm text-slate-600">{integrationMessage}</p>
         </article>
       ) : null}
@@ -45,6 +47,8 @@ export function VotingHistorySection({
         favor={favor}
         contra={contra}
         abstencao={abstencao}
+        obstrucao={obstrucao}
+        outros={outros}
         hasData={records.length > 0}
       />
 
@@ -56,6 +60,7 @@ export function VotingHistorySection({
                 <th className="px-4 py-3 font-semibold">Data</th>
                 <th className="px-4 py-3 font-semibold">Tema / votação</th>
                 <th className="px-4 py-3 font-semibold">Voto</th>
+                <th className="px-4 py-3 font-semibold">Resultado</th>
                 <th className="px-4 py-3 font-semibold text-center">Fonte</th>
               </tr>
             </thead>
@@ -70,6 +75,7 @@ export function VotingHistorySection({
                     ) : null}
                   </td>
                   <td className="px-4 py-3">{record.voto || "Indisponível"}</td>
+                  <td className="px-4 py-3">{record.resultado || "Indisponível"}</td>
                   <td className="px-4 py-3 text-center">
                     {record.sourceUrl ? (
                       <a
@@ -92,7 +98,7 @@ export function VotingHistorySection({
       ) : (
         <EmptyState
           title="Sem votações disponíveis"
-          description="Histórico nominal ainda não disponível na fonte oficial para este perfil/período."
+          description="Histórico nominal não disponível com segurança na fonte oficial para este perfil/período."
         />
       )}
 
